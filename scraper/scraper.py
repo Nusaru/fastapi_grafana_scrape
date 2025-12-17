@@ -12,4 +12,7 @@ class SeleniumScraper:
         self.driver=webdriver.Firefox(option)
 
     def getDashboard(self):
-        return "This is scraper"
+
+        return "This is scraper2"
+    
+    # def getFromGrafana
