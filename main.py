@@ -36,6 +36,12 @@ def insertGrafana(grafana_model: GrafanaCreateModel, db: Session = Depends(get_d
     db_grafana = crudGrafana.insert_grafana(grafana_model)
     return db_grafana
 
+@app.get('/grafana/{id}')
+def getGrafanaByCode(id: int, db: Session = Depends(get_db)):
+    crudGrafana = crud.CrudGrafana(db)
+    db_grafana = crudGrafana.get_grafana_by_id(id)
+    return db_grafana
+
 @app.get('/grafana/getByCode/{grafana_code}')
 def getGrafanaByCode(grafana_code: str, db: Session = Depends(get_db)):
     crudGrafana = crud.CrudGrafana(db)
@@ -49,8 +55,14 @@ def insertDashboard(dashboard_model: DashboardCreateModel, db: Session = Depends
     db_dashboard = crudDashboard.insert_dashboard(dashboard_model)
     return db_dashboard
 
+@app.get('/dashboard/{id}')
+def getByGrafanaId(id: int, db: Session = Depends(get_db)):
+    crudDashboard = crud.CrudDashboard(db)
+    db_grafana = crudDashboard.get_dashboard_by_id(id)
+    return db_grafana
+
 @app.get('/dashboard/getByGrafanaId/{grafana_id}')
-def getByGrafanaId(grafana_id: str, db: Session = Depends(get_db)):
+def getByGrafanaId(grafana_id: int, db: Session = Depends(get_db)):
     crudDashboard = crud.CrudDashboard(db)
     db_grafana = crudDashboard.get_dashboard_by_grafana_id(grafana_id)
     return db_grafana
