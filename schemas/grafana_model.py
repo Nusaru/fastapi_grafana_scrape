@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict
 
 class GrafanaBaseModel(BaseModel):
     grafana_url: str
@@ -12,5 +11,5 @@ class GrafanaCreateModel(GrafanaBaseModel):
 
 class GrafanaResponseModel(GrafanaBaseModel):
     id: int
-    class Config:
-        orm_mode = True
+    
+    model_config = ConfigDict(from_attributes=True)

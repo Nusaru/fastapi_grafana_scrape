@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class DashboardBaseModel(BaseModel):
     dashboard_url: str
@@ -10,5 +10,5 @@ class DashboardCreateModel(DashboardBaseModel):
 
 class DashboardResponseModel(DashboardBaseModel):
     id: int
-    class Config:
-        orm_mode = True
+
+    model_config = ConfigDict(from_attributes=True)

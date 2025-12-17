@@ -29,7 +29,19 @@ class GrafanaDashboardModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     dashboard_url = Column(String)
     title = Column(String)
-    grafana_id = Column(Integer, ForeignKey("grafana.id", on_delete="CASCADE"))
+    grafana_id = Column(Integer, ForeignKey("grafana.id", ondelete="CASCADE"))
 
     grafana = relationship("GrafanaModel",back_populates="dashboards")
+    api_request = relationship("ApiRequestModel",back_populates="dashboard", cascade="all, delete-orphan")
 
+class ApiRequestModel(Base):
+    __tablename__ = "api_request"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dashboard_id = Column(Integer, ForeignKey("grafana_dashboard.id", ondelete="CASCADE"))
+    api_url = Column(String)
+    json_payload = Column(String)
+    mode = Column(String)
+    caption = Column(String)
+
+    dashboard = relationship("GrafanaDashboardModel", back_populates="api_request")
