@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models.db_model import GrafanaModel, GrafanaDashboardModel, ApiRequestModel
 from schemas.grafana_model import GrafanaCreateModel
 from schemas.dashboard_model import DashboardCreateModel
@@ -8,7 +8,7 @@ class CrudGrafana:
     def __init__(self, db: Session):
         self.db = db
         
-    def insert_grafana(self, grafana_model: GrafanaCreateModel):
+    def insertGrafana(self, grafana_model: GrafanaCreateModel):
         db_grafana = GrafanaModel(
             grafana_url = grafana_model.grafana_url,
             username = grafana_model.username,
@@ -20,17 +20,23 @@ class CrudGrafana:
         self.db.refresh(db_grafana)
         return db_grafana
 
-    def get_grafana_by_code(self, grafana_code: str):
+    def getGrafanaByCode(self, grafana_code: str):
         return self.db.query(GrafanaModel).filter(GrafanaModel.grafana_code == grafana_code).first()
     
-    def get_grafana_by_id(self, id: int):
+    def getGrafanaById(self, id: int):
         return self.db.query(GrafanaModel).filter(GrafanaModel.id == id).first()
+    
+    def getAllGrafana(self):
+        return self.db.query(GrafanaModel).all()
+    
+    def getAllGrafanaWithDashboard(self):
+        return self.db.query(GrafanaModel).options(joinedload(GrafanaModel.dashboards)).all()
 
 class CrudDashboard:
     def __init__(self, db: Session):
         self.db = db
     
-    def insert_dashboard(self, dashboard_model: DashboardCreateModel):
+    def insertDashboard(self, dashboard_model: DashboardCreateModel):
         db_dashboard = GrafanaDashboardModel(
             dashboard_url = dashboard_model.dashboard_url,
             title = dashboard_model.title,
@@ -43,17 +49,20 @@ class CrudDashboard:
 
         return db_dashboard
     
-    def get_dashboard_by_grafana_id(self, grafana_id: int):
+    def getDashboardByGrafanaId(self, grafana_id: int):
         return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.grafana_id == grafana_id).all()
     
-    def get_dashboard_by_id(self, id: int):
+    def getDashboardById(self, id: int):
         return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.id == id).first()
+    
+    def getAllDasbhoard(self):
+        return self.db.query(GrafanaDashboardModel).all()
 
 class CrudApiRequest:
     def __init__(self, db: Session):
         self.db = db
 
-    def insert_api_request(self, api_request_model: ApiRequestCreateModel):
+    def insertApiRequest(self, api_request_model: ApiRequestCreateModel):
         db_api_request = ApiRequestModel(
             dashboard_id = api_request_model.dashboard_id,
             api_url = api_request_model.api_url,
@@ -68,8 +77,8 @@ class CrudApiRequest:
 
         return db_api_request
     
-    def get_api_request_by_dashboard_id(self, dashboard_id: int):
+    def getApiRequestByDashboardId(self, dashboard_id: int):
         return self.db.query(ApiRequestModel).filter(ApiRequestModel.dashboard_id == dashboard_id).all()
     
-    def get_api_request_by_id(self, id: int):
+    def getApiRequestById(self, id: int):
         return self.db.query(ApiRequestModel).filter(ApiRequestModel.id == id).first()
