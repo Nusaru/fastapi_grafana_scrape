@@ -29,8 +29,8 @@ class CrudGrafana:
     def getAllGrafana(self):
         return self.db.query(GrafanaModel).all()
     
-    def getAllGrafanaWithDashboard(self):
-        return self.db.query(GrafanaModel).options(joinedload(GrafanaModel.dashboards)).all()
+    def getAllGrafanaWithDashboardandApi(self):
+        return self.db.query(GrafanaModel).options(joinedload(GrafanaModel.dashboards).joinedload(GrafanaDashboardModel.api_request)).all()
 
 class CrudDashboard:
     def __init__(self, db: Session):

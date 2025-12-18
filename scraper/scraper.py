@@ -14,10 +14,27 @@ from services.cryptograph import Crypthograph
 from models.db_model import GrafanaModel,GrafanaDashboardModel
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+def processSelenium(listGrafana: List[GrafanaModel]):
+    result =[]
+    with ProcessPoolExecutor(max_workers=3) as executor:
+        for grafana in listGrafana:
+            futures = []
+            dashboads: List[GrafanaDashboardModel] = grafana.dashboards
+            
+            for batch in batchingList(dashboads,2):
+                scraper = SeleniumScraper(grafana,batch)
+                futures.append(
+                executor.submit(scraper.dashboardScraping)
+                )
+        
+        for f in as_completed(futures):
+            result.append(f.result())
+
+    return result
 class SeleniumScraper:
-    def __init__(self, grafana: GrafanaModel, listDashboard: List[GrafanaDashboardModel]):
+    def __init__(self, grafana: GrafanaModel, batchedDashboard: List[GrafanaDashboardModel]):
         self.grafana = grafana
-        self.listDashboard = listDashboard
+        self.batchedDashboard = batchedDashboard
         self.cryptograph = Crypthograph()
         self.driver = None
 
@@ -31,7 +48,8 @@ class SeleniumScraper:
 
         logginStatus = self.logginGrafana(self.grafana)
         if logginStatus:
-            print('login success')
+            for dashboard in self.batchedDashboard:
+                print(dashboard)
         else:
             return "Login Fails"
         return "process Success"
@@ -60,27 +78,6 @@ class SeleniumScraper:
                 print(e) 
                 return False
         return True
-                
-    
-    # def getFromGrafana
-
-def processSelenium(listGrafana: List[GrafanaModel]):
-    result =[]
-    with ProcessPoolExecutor(max_workers=3) as executor:
-        for grafana in listGrafana:
-            futures = []
-            dashboads: List[GrafanaDashboardModel] = grafana.dashboards
-            
-            for batch in batchingList(dashboads,1):
-                scraper = SeleniumScraper(grafana,batch)
-                futures.append(
-                executor.submit(scraper.dashboardScraping)
-                )
-        
-        for f in as_completed(futures):
-            result.append(f.result())
-
-    return result
 
 def batchingList(items: List[any], batchSize: int):
     for i in range(0, len(items), batchSize):

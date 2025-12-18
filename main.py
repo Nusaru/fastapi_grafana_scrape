@@ -37,7 +37,7 @@ async def root():
 @app.get('/scraper/triggerScraping')
 async def triggerScrapping(db: Session = Depends(get_db)):
     crudGrafana = CrudGrafana(db)
-    listGrafana = crudGrafana.getAllGrafanaWithDashboard()
+    listGrafana = crudGrafana.getAllGrafanaWithDashboardandApi()
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
