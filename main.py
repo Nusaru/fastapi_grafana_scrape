@@ -10,9 +10,9 @@ from fastapi import FastAPI, Depends
 from scraper.scraper import SeleniumScraper,processSelenium
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
-from schemas.grafana_model import GrafanaCreateModel,GrafanaResponseModel 
-from schemas.dashboard_model import DashboardCreateModel,DashboardResponseModel 
-from schemas.api_request_model import ApiRequestCreateModel, ApiRequestResponseModel 
+from schemas.grafanaModel import GrafanaCreateModel,GrafanaResponseModel 
+from schemas.dashboardModel import DashboardCreateModel,DashboardResponseModel 
+from schemas.apiRequestModel import ApiRequestCreateModel, ApiRequestResponseModel 
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()

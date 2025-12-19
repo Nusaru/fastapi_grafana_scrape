@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session, joinedload
-from models.db_model import GrafanaModel, GrafanaDashboardModel, ApiRequestModel
-from schemas.grafana_model import GrafanaCreateModel
-from schemas.dashboard_model import DashboardCreateModel
-from schemas.api_request_model import ApiRequestCreateModel
+from models.dbModel import GrafanaModel, GrafanaDashboardModel, ApiRequestModel
+from schemas.grafanaModel import GrafanaCreateModel
+from schemas.dashboardModel import DashboardCreateModel
+from schemas.apiRequestModel import ApiRequestCreateModel
 
 class CrudGrafana:
     def __init__(self, db: Session):

@@ -1,6 +1,7 @@
 import time
-import asyncio
+import json
 
+from urllib.parse import urlencode
 from typing import List
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -8,10 +9,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from crud import CrudGrafana, CrudDashboard, CrudApiRequest
-from sqlalchemy.orm import Session
+from services.curlServices import getRangeSixHours, CurlScraping
 from services.cryptograph import Crypthograph 
-from models.db_model import GrafanaModel,GrafanaDashboardModel
+from models.dbModel import GrafanaModel,GrafanaDashboardModel,ApiRequestModel
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 def processSelenium(listGrafana: List[GrafanaModel]):
@@ -24,7 +24,7 @@ def processSelenium(listGrafana: List[GrafanaModel]):
             for batch in batchingList(dashboads,2):
                 scraper = SeleniumScraper(grafana,batch)
                 futures.append(
-                executor.submit(scraper.dashboardScraping)
+                    executor.submit(scraper.dashboardScraping)
                 )
         
         for f in as_completed(futures):
@@ -32,13 +32,14 @@ def processSelenium(listGrafana: List[GrafanaModel]):
 
     return result
 class SeleniumScraper:
-    def __init__(self, grafana: GrafanaModel, batchedDashboard: List[GrafanaDashboardModel]):
+    def __init__(self, grafana: GrafanaModel, listDashboard: List[GrafanaDashboardModel]):
         self.grafana = grafana
-        self.batchedDashboard = batchedDashboard
+        self.listDashboard = listDashboard
         self.cryptograph = Crypthograph()
         self.driver = None
 
     def dashboardScraping(self):
+        listResponse=[]
         option = Options()
         option.add_argument("--headless")
         option.set_preference("app.update.enabled", False)
@@ -48,12 +49,61 @@ class SeleniumScraper:
 
         logginStatus = self.logginGrafana(self.grafana)
         if logginStatus:
-            for dashboard in self.batchedDashboard:
+            for dashboard in self.listDashboard:
+                self.getPageScreenshot(dashboard)
+                listApiReq:List[ApiRequestModel] = dashboard.api_request
+                for apiReq in listApiReq:
+                    timeNow = getRangeSixHours()["now"]
+                    jsonPayload = json.loads(apiReq.json_payload)
+                    curlScraping = CurlScraping(self.grafana.username,self.grafana.password)
+                    if apiReq.mode=='form':
+                        jsonPayload['start']=int(timeNow)
+                        jsonPayload['end']=int(timeNow)+50
+                        payload = urlencode(jsonPayload)
+                    else:
+                        jsonPayload['from']=str(int(timeNow))                      
+                        jsonPayload['to']=str(int(timeNow)+50)
+                        payload = json.dumps(jsonPayload)
+                        raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode))
+                        parsed = curlScraping.parse(raw)
+                    listResponse.append(parsed)
                 print(dashboard)
         else:
             return "Login Fails"
-        return "process Success"
+        return listResponse
     
+    def getPageScreenshot(self, dashboard: GrafanaDashboardModel):
+        try:
+            while True:
+                self.driver.get(dashboard.dashboard_url)
+                wait = WebDriverWait(self.driver,3)
+                loadCompleted = wait.until_not(EC.url_contains)
+                if loadCompleted == True:
+                    break
+        except Exception as e:
+            print(e)
+
+        self.driver.set_window_size(1920, 500)
+        scroll_height = self.driver.execute_script(
+        "return document.querySelector('.main-view').scrollHeight"
+        )
+
+        self.driver.set_window_size(1920, scroll_height)
+
+        try:
+            wait = WebDriverWait(self.driver,2)
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"[aria-label='Undock menu']")))
+            elementDock = self.driver.find_element(By.CSS_SELECTOR,"[aria-label='Undock menu']")
+            elementDock.click()
+        except:
+            print("No Side Panel Found")
+        
+        self.waitPanelLoading()
+        
+        strFileName= "./resource/"+ dashboard.filename + ".png"
+        
+        self.driver.save_full_page_screenshot(strFileName)
+
     def logginGrafana(self, grafana: GrafanaModel):
         username = grafana.username
         password = self.cryptograph.decrypt(str(grafana.password).encode())
@@ -79,6 +129,30 @@ class SeleniumScraper:
                 return False
         return True
 
+    def waitPanelLoading(self):
+        start_time= time.time()
+        timeout=120
+        self.driver.execute_script("""
+            const mid = document.body.scrollHeight / 2;
+            window.scrollTo(0, mid);
+        """)
+
+        time.sleep(0.5) 
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(0.5) 
+
+        self.driver.execute_script("window.scrollTo(0, 0)")
+
+        while True:
+            loading_bars = self.driver.find_elements(By.CSS_SELECTOR, "[aria-label='Panel loading bar']")
+            if len(loading_bars) == 0:
+                return True
+            
+            if time.time() - start_time > timeout:
+                return False
+
+            time.sleep(0.5)
+        
 def batchingList(items: List[any], batchSize: int):
     for i in range(0, len(items), batchSize):
         yield items[i: i + batchSize]
