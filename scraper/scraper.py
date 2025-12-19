@@ -64,8 +64,8 @@ class SeleniumScraper:
                         jsonPayload['from']=str(int(timeNow))                      
                         jsonPayload['to']=str(int(timeNow)+50)
                         payload = json.dumps(jsonPayload)
-                        raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode))
-                        parsed = curlScraping.parse(raw)
+                    raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode))
+                    parsed = curlScraping.parse(raw)
                     listResponse.append(parsed)
                 print(dashboard)
         else:
