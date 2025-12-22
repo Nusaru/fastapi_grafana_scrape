@@ -1,14 +1,18 @@
 import os
 import sys
 import crud
+import asyncio
+
+from crud import CrudGrafana
+from scraper.scraper import SeleniumScraper
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends
-from scraper.scraper import SeleniumScraper
+from scraper.scraper import SeleniumScraper,processSelenium
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
-from schemas.grafana_model import GrafanaCreateModel,GrafanaResponseModel 
-from schemas.dashboard_model import DashboardCreateModel,DashboardResponseModel 
-from schemas.api_request_model import ApiRequestCreateModel, ApiRequestResponseModel 
+from schemas.grafanaModel import GrafanaCreateModel,GrafanaResponseModel 
+from schemas.dashboardModel import DashboardCreateModel,DashboardResponseModel 
+from schemas.apiRequestModel import ApiRequestCreateModel, ApiRequestResponseModel 
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -28,62 +32,77 @@ load_dotenv(env_path)
 @app.get('/')
 async def root():
     a=SeleniumScraper()
-    return {"message" : a.getDashboard() }
+    return {"message" : a.dashboardScraping() }
+
+@app.get('/scraper/triggerScraping')
+async def triggerScrapping(db: Session = Depends(get_db)):
+    crudGrafana = CrudGrafana(db)
+    listGrafana = crudGrafana.getAllGrafanaWithDashboardandApi()
+    loop = asyncio.get_running_loop()
+    try:
+        result = await loop.run_in_executor(
+            None,
+            processSelenium,
+            listGrafana
+        )
+        return result
+    except Exception as e:
+        return e
 
 # Grafana
 @app.post('/grafana/insertGrafana',response_model=GrafanaResponseModel)
-def insertGrafana(grafana_model: GrafanaCreateModel, db: Session = Depends(get_db)):
+async def insertGrafana(grafana_model: GrafanaCreateModel, db: Session = Depends(get_db)):
     crudGrafana = crud.CrudGrafana(db)
-    db_grafana = crudGrafana.insert_grafana(grafana_model)
+    db_grafana = crudGrafana.insertGrafana(grafana_model)
     return db_grafana
 
 @app.get('/grafana/{id}')
-def getGrafanaById(id: int, db: Session = Depends(get_db)):
+async def getGrafanaById(id: int, db: Session = Depends(get_db)):
     crudGrafana = crud.CrudGrafana(db)
-    db_grafana = crudGrafana.get_grafana_by_id(id)
+    db_grafana = crudGrafana.getGrafanaById(id)
     return db_grafana
 
 @app.get('/grafana/getByCode/{grafana_code}')
-def getGrafanaByCode(grafana_code: str, db: Session = Depends(get_db)):
+async def getGrafanaByCode(grafana_code: str, db: Session = Depends(get_db)):
     crudGrafana = crud.CrudGrafana(db)
-    db_grafana = crudGrafana.get_grafana_by_code(grafana_code)
+    db_grafana = crudGrafana.getGrafanaByCode(grafana_code)
     return db_grafana
 
 #Dashboard
 @app.post('/dashboard/insertDashboard', response_model=DashboardResponseModel)
-def insertDashboard(dashboard_model: DashboardCreateModel, db: Session = Depends(get_db)):
+async def insertDashboard(dashboard_model: DashboardCreateModel, db: Session = Depends(get_db)):
     crudDashboard = crud.CrudDashboard(db)
-    db_dashboard = crudDashboard.insert_dashboard(dashboard_model)
+    db_dashboard = crudDashboard.insertDashboard(dashboard_model)
     return db_dashboard
 
 @app.get('/dashboard/{id}')
-def getDashboardByid(id: int, db: Session = Depends(get_db)):
+async def getDashboardByid(id: int, db: Session = Depends(get_db)):
     crudDashboard = crud.CrudDashboard(db)
-    db_dashboard = crudDashboard.get_dashboard_by_id(id)
+    db_dashboard = crudDashboard.getDashboardById(id)
     return db_dashboard
 
 @app.get('/dashboard/getByGrafanaId/{grafana_id}')
-def getDashboardByGrafanaId(grafana_id: int, db: Session = Depends(get_db)):
+async def getDashboardByGrafanaId(grafana_id: int, db: Session = Depends(get_db)):
     crudDashboard = crud.CrudDashboard(db)
-    db_dashboard = crudDashboard.get_dashboard_by_grafana_id(grafana_id)
+    db_dashboard = crudDashboard.getDashboardByGrafanaId(grafana_id)
     return db_dashboard
 
 #request API
 
 @app.post('/apiRequest/insertApiRequest', response_model=ApiRequestResponseModel)
-def insertApiRequest(api_request_model: ApiRequestCreateModel, db: Session = Depends(get_db)):
+async def insertApiRequest(api_request_model: ApiRequestCreateModel, db: Session = Depends(get_db)):
     crudApiRequest = crud.CrudApiRequest(db)
-    db_api_request = crudApiRequest.insert_api_request(api_request_model)
+    db_api_request = crudApiRequest.insertApiRequest(api_request_model)
     return db_api_request
 
 @app.get('/apiRequest/{id}')
-def getApiRequestBy(id: int, db: Session = Depends(get_db)):
+async def getApiRequestBy(id: int, db: Session = Depends(get_db)):
     crudApiRequest = crud.CrudApiRequest(db)
-    db_api_request = crudApiRequest.get_api_request_by_id(id)
+    db_api_request = crudApiRequest.getApiRequestById(id)
     return db_api_request
 
 @app.get('/apiRequest/getByDashboardId/{dashboard_id}')
-def getApiRequestByDashboardId(dashboard_id: int, db: Session = Depends(get_db)):
+async def getApiRequestByDashboardId(dashboard_id: int, db: Session = Depends(get_db)):
     crudApiRequest = crud.CrudApiRequest(db)
-    db_api_request = crudApiRequest.get_api_request_by_dashboard_id(dashboard_id)
+    db_api_request = crudApiRequest.getApiRequestByDashboardId(dashboard_id)
     return db_api_request

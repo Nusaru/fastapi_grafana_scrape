@@ -4,6 +4,7 @@ class DashboardBaseModel(BaseModel):
     dashboard_url: str
     title: str
     grafana_id: int
+    filename: str
 
 class DashboardCreateModel(DashboardBaseModel):
     pass

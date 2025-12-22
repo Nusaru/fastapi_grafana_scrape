@@ -30,8 +30,9 @@ class GrafanaDashboardModel(Base):
     dashboard_url = Column(String)
     title = Column(String)
     grafana_id = Column(Integer, ForeignKey("grafana.id", ondelete="CASCADE"))
+    filename = Column(String)
 
-    grafana = relationship("GrafanaModel",back_populates="dashboards")
+    grafana= relationship("GrafanaModel",back_populates="dashboards")
     api_request = relationship("ApiRequestModel",back_populates="dashboard", cascade="all, delete-orphan")
 
 class ApiRequestModel(Base):
