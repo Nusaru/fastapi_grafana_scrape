@@ -39,14 +39,15 @@ async def triggerScrapping(db: Session = Depends(get_db)):
     crudGrafana = CrudGrafana(db)
     listGrafana = crudGrafana.getAllGrafanaWithDashboardandApi()
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None,
-        processSelenium,
-        listGrafana
-    )
-    # scraper = SeleniumScraper(db)
-    # text = scraper.getDashboard()
-    return result
+    try:
+        result = await loop.run_in_executor(
+            None,
+            processSelenium,
+            listGrafana
+        )
+        return result
+    except Exception as e:
+        return e
 
 # Grafana
 @app.post('/grafana/insertGrafana',response_model=GrafanaResponseModel)

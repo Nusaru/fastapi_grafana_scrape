@@ -2,7 +2,10 @@ import pycurl
 import base64
 import time
 
+
 from io import BytesIO
+from collections import defaultdict
+
 from .cryptograph import Crypthograph
 
 class CurlScraping:
@@ -45,6 +48,9 @@ class CurlScraping:
         # ========== SQL Data (MySQL/Postgres/MSSQL) ==========
         if "results" in rawJson:
             all_series = []
+            listValues=[]
+            resultDict={}
+            colCount=0
 
             for key, result in rawJson["results"].items():
                 frames = result.get("frames", [])
@@ -56,9 +62,6 @@ class CurlScraping:
                         "values": frame["data"]["values"]
                     })
             parsed = {"type": "sql", "series": all_series}
-            listValues=[]
-            resultDict={}
-            colCount=0
             for s in parsed["series"]:
                 for column in s["columns"]:
                     for value in s["values"][colCount]:
@@ -74,12 +77,17 @@ class CurlScraping:
         if "data" in rawJson and "result" in rawJson["data"]:
             series = []
             for item in rawJson["data"]["result"]:
+                # name = json.load(str(item.get("metric")))
+                name = item['metric']
                 series.append({
-                    "name": str(item.get("metric", {})),
+                    "instance": name["instance"],
+                    "volume": name["volume"],
                     "columns": ["timestamp", "value"],
-                    "values": [item["values"]]
+                    "values": item["values"][-1]
                 })
-            return {"type": "prometheus", "series": series}
+            grouped = self.groupByInstance(series)
+
+            return grouped
         
         # ========== Loki ==========
         if "data" in rawJson and "result" in rawJson["data"] and isinstance(rawJson["data"]["result"], list):
@@ -120,6 +128,30 @@ class CurlScraping:
             for row in rows
         ]
 
+    def groupByInstance(self,datas: list):
+        grouped = defaultdict(list)
+
+        for data in datas:
+            instance = data.get("instance")
+            volume = data.get("volume")
+
+            entry = {
+                "value": data["values"][-1]
+            }
+
+            if volume is not None:
+                entry["volume"] = volume
+            
+            grouped[instance].append(entry)
+
+        return [
+            {
+                "instance":instances,
+                "values": values
+            }
+            for instances, values in grouped.items()
+        ]
+            
 
 def getRangeSixHours():
     timeRange={

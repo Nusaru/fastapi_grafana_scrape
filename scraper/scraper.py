@@ -67,7 +67,7 @@ class SeleniumScraper:
                     raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode))
                     parsed = curlScraping.parse(raw)
                     listResponse.append(parsed)
-                print(dashboard)
+                print(dashboard.title)
         else:
             return "Login Fails"
         return listResponse
