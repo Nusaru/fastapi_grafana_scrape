@@ -5,7 +5,7 @@ class ApiRequestBaseModel(BaseModel):
     api_url: str
     json_payload: str
     mode: str
-    caption: str
+    code: str
 
 class ApiRequestCreateModel(ApiRequestBaseModel):
     pass

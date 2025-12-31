@@ -43,6 +43,6 @@ class ApiRequestModel(Base):
     api_url = Column(String)
     json_payload = Column(String)
     mode = Column(String)
-    caption = Column(String)
+    code = Column(String)
 
     dashboard = relationship("GrafanaDashboardModel", back_populates="api_request")

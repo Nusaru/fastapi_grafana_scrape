@@ -1,5 +1,6 @@
 import time
 import json
+import asyncio
 
 from urllib.parse import urlencode
 from typing import List
@@ -11,8 +12,10 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from services.curlServices import getRangeSixHours, CurlScraping
 from services.cryptograph import Crypthograph 
+from services.telegramServices import TelegramFunction
 from models.dbModel import GrafanaModel,GrafanaDashboardModel,ApiRequestModel
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from constant.constant import CaptionBuilder, grafanaHomeTitle
 
 def processSelenium(listGrafana: List[GrafanaModel]):
     result =[]
@@ -37,6 +40,8 @@ class SeleniumScraper:
         self.listDashboard = listDashboard
         self.cryptograph = Crypthograph()
         self.driver = None
+        self.captionBuilder = CaptionBuilder()
+        self.telegramFunction = TelegramFunction()
 
     def dashboardScraping(self):
         listResponse=[]
@@ -50,23 +55,36 @@ class SeleniumScraper:
         logginStatus = self.logginGrafana(self.grafana)
         if logginStatus:
             for dashboard in self.listDashboard:
-                self.getPageScreenshot(dashboard)
+                caption=""
                 listApiReq:List[ApiRequestModel] = dashboard.api_request
                 for apiReq in listApiReq:
                     timeNow = getRangeSixHours()["now"]
-                    jsonPayload = json.loads(apiReq.json_payload)
+                    pastSixHour = getRangeSixHours()["pastSixHour"]
                     curlScraping = CurlScraping(self.grafana.username,self.grafana.password)
+                    jsonPayload = json.loads(apiReq.json_payload)
+                    
                     if apiReq.mode=='form':
                         jsonPayload['start']=int(timeNow)
-                        jsonPayload['end']=int(timeNow)+50
+                        jsonPayload['end']=int(pastSixHour)
                         payload = urlencode(jsonPayload)
                     else:
                         jsonPayload['from']=str(int(timeNow))                      
                         jsonPayload['to']=str(int(timeNow)+50)
                         payload = json.dumps(jsonPayload)
-                    raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode))
+                    
+                    while True:
+                        raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode)) 
+                        print(json.dumps(raw,indent=2))
+                        if raw != {} or not None:
+                            break
                     parsed = curlScraping.parse(raw)
+                    caption += self.captionBuilder.buildTelegramCaptionByCode(parsed,apiReq.code)
+
                     listResponse.append(parsed)
+
+                strFileName = self.getPageScreenshot(dashboard)
+                asyncio.run(self.telegramFunction.sendImageWithCaption(strFileName))
+                asyncio.run(self.telegramFunction.sendText(caption))
                 print(dashboard.title)
         else:
             return "Login Fails"
@@ -76,13 +94,16 @@ class SeleniumScraper:
         try:
             while True:
                 self.driver.get(dashboard.dashboard_url)
-                wait = WebDriverWait(self.driver,3)
-                loadCompleted = wait.until_not(EC.url_contains)
-                if loadCompleted == True:
+                wait = WebDriverWait(self.driver,5)
+                loadCompleted = wait.until(EC.url_contains(dashboard.dashboard_url))
+                tittle = self.driver.title
+                if loadCompleted == True and tittle != grafanaHomeTitle:
                     break
         except Exception as e:
             print(e)
 
+        print(f'title = {self.driver.title}')
+        time.sleep(3)
         self.driver.set_window_size(1920, 500)
         scroll_height = self.driver.execute_script(
         "return document.querySelector('.main-view').scrollHeight"
@@ -103,6 +124,8 @@ class SeleniumScraper:
         strFileName= "./resource/"+ dashboard.filename + ".png"
         
         self.driver.save_full_page_screenshot(strFileName)
+
+        return strFileName
 
     def logginGrafana(self, grafana: GrafanaModel):
         username = grafana.username
