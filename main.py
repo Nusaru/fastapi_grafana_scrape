@@ -34,6 +34,8 @@ async def root():
     a=SeleniumScraper()
     return {"message" : a.dashboardScraping() }
 
+#scraper
+
 @app.get('/scraper/triggerScraping')
 async def triggerScrapping(db: Session = Depends(get_db)):
     crudGrafana = CrudGrafana(db)
@@ -66,6 +68,12 @@ async def getGrafanaById(id: int, db: Session = Depends(get_db)):
 async def getGrafanaByCode(grafana_code: str, db: Session = Depends(get_db)):
     crudGrafana = crud.CrudGrafana(db)
     db_grafana = crudGrafana.getGrafanaByCode(grafana_code)
+    return db_grafana
+
+@app.get('/grafana')
+async def getGrafanaAll(db: Session = Depends(get_db)):
+    crudGrafana = crud.CrudGrafana(db)
+    db_grafana = crudGrafana.getAllGrafanaWithDashboardandApi()
     return db_grafana
 
 #Dashboard

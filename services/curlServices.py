@@ -70,6 +70,7 @@ class CurlScraping:
                     resultDict.update({column['name']:listValues})
                     listValues=[]
                     colCount+=1
+                colCount=0
             resultList = self.columnToRow(resultDict)
             return resultList
         
