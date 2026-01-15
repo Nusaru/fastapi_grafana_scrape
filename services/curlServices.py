@@ -70,6 +70,7 @@ class CurlScraping:
                     resultDict.update({column['name']:listValues})
                     listValues=[]
                     colCount+=1
+                colCount=0
             resultList = self.columnToRow(resultDict)
             return resultList
         
@@ -136,7 +137,7 @@ class CurlScraping:
             volume = data.get("volume")
 
             entry = {
-                "value": data["values"][-1]
+                "value": int(float(data["values"][-1]))
             }
 
             if volume is not None:
