@@ -1,8 +1,9 @@
 import time
 import json
 import asyncio
+import crud
 
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse,parse_qs
 from typing import List
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -16,28 +17,39 @@ from services.telegramServices import TelegramFunction
 from models.dbModel import GrafanaModel,GrafanaDashboardModel,ApiRequestModel
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from constant.constant import CaptionBuilder, grafanaHomeTitle, grafanaTitle
+from database import get_db_ctx
 
-def processSelenium(listGrafana: List[GrafanaModel]):
+def processSelenium(listGrafanaId: List[int]):
     result =[]
-    with ProcessPoolExecutor(max_workers=3) as executor:
-        for grafana in listGrafana:
-            futures = []
-            dashboads: List[GrafanaDashboardModel] = grafana.dashboards
-            batches = batchingList(dashboads,2)
-            for batch in batches:
-                scraper = SeleniumScraper(grafana,batch)
-                futures.append(
-                    executor.submit(scraper.initWebDriver)
-                )
-        
-        for f in as_completed(futures):
-            result.append(f.result())
-
+    with get_db_ctx() as localDb: 
+        crudDashBoard = crud.CrudDashboard(localDb)
+        with ProcessPoolExecutor(max_workers=3) as executor:
+            for grafanaId in listGrafanaId:
+                futures = []
+                listDasboardId = crudDashBoard.getAllDasbhoardIdByGrafanaId(grafanaId)
+                batches = batchingList(listDasboardId,2)
+                for batch in batches:
+                    scraper = SeleniumScraper(grafanaId,batch)
+                    futures.append(
+                        executor.submit(scraper.initWebDriver)
+                    )
+            
+            for f in as_completed(futures):
+                result.append(f.result())
+    scraper.driverExit()
     return result
 class SeleniumScraper:
-    def __init__(self, grafana: GrafanaModel, listDashboard: List[GrafanaDashboardModel]):
-        self.grafana = grafana
-        self.listDashboard = listDashboard
+    def __init__(self, grafanaId: int, listDashboardId: List[int]):
+        self.listDashboard: List[GrafanaDashboardModel] = []
+        self.listApiReq: List[ApiRequestModel] = []
+        with get_db_ctx() as localDb:
+            crudGrafana = crud.CrudGrafana(localDb)
+            crudDashboard = crud.CrudDashboard(localDb)
+            self.grafana = crudGrafana.getGrafanaById(grafanaId)
+            for dashboardId in listDashboardId:
+                dashboard = crudDashboard.getDashboardById(dashboardId)
+                self.listDashboard.append(dashboard)
+
         self.cryptograph = Crypthograph()
         self.driver = None
         self.captionBuilder = CaptionBuilder()
@@ -61,30 +73,40 @@ class SeleniumScraper:
         if logginStatus:
             for dashboard in self.listDashboard:
                 caption=""
-                listApiReq:List[ApiRequestModel] = dashboard.api_request
-                for apiReq in listApiReq:
+
+                with get_db_ctx() as localDb:
+                    crudApiReq = crud.CrudApiRequest(localDb)
+                    self.listApiReq = crudApiReq.getApiRequestByDashboardId(dashboard.id)
+                
+                for apiReq in self.listApiReq:
                     timeNow = getRangeSixHours()["now"]
                     pastSixHour = getRangeSixHours()["pastSixHour"]
                     curlScraping = CurlScraping(self.grafana.username,self.grafana.password)
                     jsonPayload = json.loads(apiReq.json_payload)
+                    dsType = getDsType(apiReq.api_url)
                     
                     if apiReq.mode=='form':
                         jsonPayload['start']=int(timeNow)
                         jsonPayload['end']=int(pastSixHour)
                         payload = urlencode(jsonPayload)
                     else:
-                        jsonPayload['from']=str(int(timeNow))                      
-                        jsonPayload['to']=str(int(timeNow)+50)
+                        if dsType == "mssql":
+                            jsonPayload['from']=str(int(timeNow))                      
+                            jsonPayload['to']=str(int(timeNow)+50)
+                        else:
+                            nowMs = int(int(timeNow) * 1000)
+                            jsonPayload['from']=str(nowMs)                      
+                            jsonPayload['to']=str(nowMs+50)
                         payload = json.dumps(jsonPayload)
                     
                     while True:
                         raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode)) 
-                        print(json.dumps(raw,indent=2))
+                        print(json.dumps(jsonPayload,indent=2))
                         if raw != {} or not None:
                             break
                     parsed = curlScraping.parse(raw)
                     caption += self.captionBuilder.buildTelegramCaptionByCode(parsed,apiReq.code)
-                    if len(listApiReq) > 1:
+                    if len(self.listApiReq) > 1:
                         caption += "\n-------------------\n"
 
                     listResponse.append(parsed)
@@ -190,7 +212,15 @@ class SeleniumScraper:
     def pageIsFullyLoaded(self):
         wait = WebDriverWait(self.driver,30)
         return wait.until(lambda driver: self.driver.execute_script("return document.readyState") == "complete")
-        
+
+    def driverExit(self):
+        self.driver.quit()     
 def batchingList(items: List[any], batchSize: int):
     for i in range(0, len(items), batchSize):
         yield items[i: i + batchSize]
+
+def getDsType(url: str):
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+
+    return qs.get('ds_type',[None])[0]

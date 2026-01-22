@@ -39,13 +39,13 @@ async def root():
 @app.get('/scraper/triggerScraping')
 async def triggerScrapping(db: Session = Depends(get_db)):
     crudGrafana = CrudGrafana(db)
-    listGrafana = crudGrafana.getAllGrafanaWithDashboardandApi()
+    listGrafanaId = crudGrafana.getAllGrafanaId()
     loop = asyncio.get_running_loop()
     try:
         result = await loop.run_in_executor(
             None,
             processSelenium,
-            listGrafana
+            listGrafanaId
         )
         return result
     except Exception as e:

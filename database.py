@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from contextlib import contextmanager
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./scraper.db"
 
@@ -17,3 +18,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@contextmanager
+def get_db_ctx():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close

@@ -57,7 +57,7 @@ def buildCaptionForTicketing(datas:list):
     f"Waiting for Response = {data["waiting for response"]}\n" \
     f"Waiting for Assigned = {data["waiting for assigned"]}\n" \
     f"Cancelled = {data["cancelled"]}\n" \
-    f"Closed = {data["closed"]}\n"
+    f"Closed = {data["closed"]}"
 
     return caption
 

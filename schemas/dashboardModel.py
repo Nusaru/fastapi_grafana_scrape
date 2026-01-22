@@ -5,6 +5,7 @@ class DashboardBaseModel(BaseModel):
     title: str
     grafana_id: int
     filename: str
+    is_active: int
 
 class DashboardCreateModel(DashboardBaseModel):
     pass
