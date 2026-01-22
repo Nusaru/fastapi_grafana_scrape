@@ -17,7 +17,7 @@ from schemas.apiRequestModel import ApiRequestCreateModel, ApiRequestResponseMod
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
-def getCurrentDirectory(self, dotEnv: bool =False):
+def getCurrentDirectory(dotEnv: bool =False):
         if getattr(sys,'frozen',False):
             if dotEnv:
                 return getattr(sys, '_MEIPASS',os.path.dirname(sys.executable))

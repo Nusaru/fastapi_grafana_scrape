@@ -41,7 +41,6 @@ def buildCaptionForServerStorage(datas: list):
         if valueCaption != "":
             caption += serverCaption + valueCaption
         serverCaption=""
-        print(f'caption : {caption}')
     return title + caption
 
 def buildCaptionForUserActive(datas:list):
@@ -62,6 +61,5 @@ def buildCaptionForTicketing(datas:list):
     return caption
 
 def buildCaptionForServerResponse(datas:list):
-    print(f'server response: \n{json.dumps(datas, indent=2)}')
     caption = "server Response Test\n"
     return caption

@@ -101,7 +101,6 @@ class SeleniumScraper:
                     
                     while True:
                         raw = json.loads(curlScraping.postPyCurl(apiReq.api_url,payload,apiReq.mode)) 
-                        print(json.dumps(jsonPayload,indent=2))
                         if raw != {} or not None:
                             break
                     parsed = curlScraping.parse(raw)
@@ -114,7 +113,6 @@ class SeleniumScraper:
                 strFileName = self.getPageScreenshot(dashboard)
                 asyncio.run(self.telegramFunction.sendImageWithCaption(strFileName))
                 asyncio.run(self.telegramFunction.sendText(caption))
-                print(dashboard.title)
         else:
             print("Login Failed, Retrying...")
             self.dashboardScraping()
@@ -127,7 +125,6 @@ class SeleniumScraper:
             self.driver.get(dashboard.dashboard_url)
             loadCompleted = self.pageIsFullyLoaded()
             title = self.driver.title
-            print(f"title = {title}")
             if loadCompleted == False or (title == grafanaHomeTitle or title == grafanaTitle):
                 self.getPageScreenshot(dashboard)
         except Exception as e:
