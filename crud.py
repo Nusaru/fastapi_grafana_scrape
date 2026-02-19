@@ -89,7 +89,7 @@ class CrudDashboard:
             ).first()
     
     def getDashboardById(self, id: int):
-        return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.id == id).filter(GrafanaDashboardModel.is_active==1).first()
+        return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.id == id).filter(GrafanaDashboardModel.is_active == True).first()
     
     def getAllDasbhoard(self):
         return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.is_active == True).all()
