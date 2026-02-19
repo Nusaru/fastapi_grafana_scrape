@@ -81,6 +81,7 @@ class SeleniumScraper:
         if logginStatus:
             for dashboard in self.listDashboard:
                 caption=""
+                print("Scraping dashboard ",dashboard.title)
 
                 with get_db_ctx() as localDb:
                     crudApiReq = crud.CrudApiRequest(localDb)
