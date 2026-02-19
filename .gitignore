@@ -210,3 +210,4 @@ __marimo__/
 scraper.db
 .vscode/
 resource/
+docker-compose.yaml
