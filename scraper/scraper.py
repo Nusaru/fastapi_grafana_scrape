@@ -2,6 +2,7 @@ import time
 import json
 import asyncio
 import crud
+import platform
 
 from urllib.parse import urlencode, urlparse,parse_qs
 from typing import List
@@ -10,6 +11,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.firefox.service import Service
 
 from services.curlServices import getRangeSixHours, CurlScraping
 from services.cryptograph import Crypthograph 
@@ -54,6 +56,7 @@ class SeleniumScraper:
         self.driver = None
         self.captionBuilder = CaptionBuilder()
         self.telegramFunction = TelegramFunction()
+        self.osName = platform.system()
 
     def initWebDriver(self):
         option = Options()
@@ -62,7 +65,12 @@ class SeleniumScraper:
         option.set_preference("app.update.enabled", False)
         option.set_preference("app.update.auto", False)
         option.set_preference("app.update.staging.enabled", False)
-        self.driver=webdriver.Firefox(option)
+        
+        if self.osName == "Windows":
+            self.driver=webdriver.Firefox(options=option)
+        else:
+            service= Service("/usr/bin/geckodriver")
+            self.driver = webdriver.Firefox(service=service, options=option)
         self.driver.command_executor.set_timeout(300)
 
         return self.dashboardScraping()

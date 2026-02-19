@@ -2,6 +2,7 @@ import os
 import sys
 import crud
 import asyncio
+import platform
 
 from crud import CrudGrafana
 from scraper.scraper import SeleniumScraper
@@ -16,18 +17,24 @@ from schemas.apiRequestModel import ApiRequestCreateModel, ApiRequestResponseMod
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
+osName = platform.system()
 
 def getCurrentDirectory(dotEnv: bool =False):
+    if osName == "Windows":
+        print ("Running OS is Windows")
         if getattr(sys,'frozen',False):
             if dotEnv:
-                return getattr(sys, '_MEIPASS',os.path.dirname(sys.executable))
+                currentDirectory = getattr(sys, '_MEIPASS',os.path.dirname(sys.executable))
             else:
-                return os.path.dirname(sys.executable)  
+                currentDirectory = os.path.dirname(sys.executable)  
         else:
-            return os.path.dirname(os.path.abspath(sys.argv[0]))
+            currentDirectory = os.path.dirname(os.path.abspath(sys.argv[0]))
+        env_path = os.path.join(currentDirectory,".env")
+        load_dotenv(env_path)
+    elif osName == "Linux":
+        print ("Running OS is Linux")
 
-env_path = os.path.join(getCurrentDirectory(True),".env")
-load_dotenv(env_path)
+getCurrentDirectory(True)
 
 @app.get('/')
 async def root():
