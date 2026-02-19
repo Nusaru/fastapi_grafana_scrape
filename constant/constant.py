@@ -4,6 +4,7 @@ import json
 grafanaHomeTitle: final  = "Home - Dashboards - Grafana"
 grafanaTitle: final  = "Dashboards - Grafana"
 
+
 #api Code
 volumeStorageCode: final = "Volume Storage"
 activeUserCode: final = "Active User"
@@ -41,7 +42,6 @@ def buildCaptionForServerStorage(datas: list):
         if valueCaption != "":
             caption += serverCaption + valueCaption
         serverCaption=""
-        print(f'caption : {caption}')
     return title + caption
 
 def buildCaptionForUserActive(datas:list):
@@ -57,11 +57,10 @@ def buildCaptionForTicketing(datas:list):
     f"Waiting for Response = {data["waiting for response"]}\n" \
     f"Waiting for Assigned = {data["waiting for assigned"]}\n" \
     f"Cancelled = {data["cancelled"]}\n" \
-    f"Closed = {data["closed"]}\n"
+    f"Closed = {data["closed"]}"
 
     return caption
 
 def buildCaptionForServerResponse(datas:list):
-    print(f'server response: \n{json.dumps(datas, indent=2)}')
     caption = "server Response Test\n"
     return caption

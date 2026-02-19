@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload, with_loader_criteria
 from models.dbModel import GrafanaModel, GrafanaDashboardModel, ApiRequestModel
 from schemas.grafanaModel import GrafanaCreateModel
 from schemas.dashboardModel import DashboardCreateModel
@@ -27,11 +28,22 @@ class CrudGrafana:
         return self.db.query(GrafanaModel).filter(GrafanaModel.id == id).first()
     
     def getAllGrafana(self):
-        return self.db.query(GrafanaModel).all()
+        return self.db.query(GrafanaModel).filter(GrafanaModel.is_active == 1).all()
     
     def getAllGrafanaWithDashboardandApi(self):
-        return self.db.query(GrafanaModel).options(joinedload(GrafanaModel.dashboards).joinedload(GrafanaDashboardModel.api_request)).all()
-
+        return self.db.query(GrafanaModel)\
+            .filter(GrafanaModel.is_active == 1)\
+            .options(
+                joinedload(GrafanaModel.dashboards).joinedload(GrafanaDashboardModel.api_request),
+                with_loader_criteria(
+                    GrafanaDashboardModel,
+                    GrafanaDashboardModel.is_active == 1,
+                    include_aliases= True)
+                ).all()
+    
+    def getAllGrafanaId(self):
+        return self.db.execute(select(GrafanaModel.id).where(GrafanaModel.is_active == 1)).scalars().all()
+    
 class CrudDashboard:
     def __init__(self, db: Session):
         self.db = db
@@ -50,13 +62,40 @@ class CrudDashboard:
         return db_dashboard
     
     def getDashboardByGrafanaId(self, grafana_id: int):
-        return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.grafana_id == grafana_id).all()
+        return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.grafana_id == grafana_id).filter(GrafanaDashboardModel.is_active == 1).all()
+    
+    def getDashboardWithApiByGrafanaId(self, grafana_id: int):
+        return self.db.query(GrafanaDashboardModel)\
+            .filter(GrafanaDashboardModel.grafana_id == grafana_id)\
+            .filter(GrafanaDashboardModel.is_active == 1)\
+            .options(
+                joinedload(GrafanaDashboardModel.api_request),
+                with_loader_criteria(
+                    ApiRequestModel,
+                    ApiRequestModel.is_active == 1,
+                    include_aliases= True)
+            ).all()
+    
+    def getDashboardWithApiById(self, id: int):
+        return self.db.query(GrafanaDashboardModel)\
+            .filter(GrafanaDashboardModel.id == id)\
+            .filter(GrafanaDashboardModel.is_active == 1)\
+            .options(
+                joinedload(GrafanaDashboardModel.api_request),
+                with_loader_criteria(
+                    ApiRequestModel,
+                    ApiRequestModel.is_active == 1,
+                    include_aliases= True)
+            ).first()
     
     def getDashboardById(self, id: int):
-        return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.id == id).first()
+        return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.id == id).filter(GrafanaDashboardModel.is_active==1).first()
     
     def getAllDasbhoard(self):
-        return self.db.query(GrafanaDashboardModel).all()
+        return self.db.query(GrafanaDashboardModel).filter(GrafanaDashboardModel.is_active == 1).all()
+    
+    def getAllDasbhoardIdByGrafanaId(self, grafana_id: int):
+        return self.db.execute(select(GrafanaDashboardModel.id).where(GrafanaDashboardModel.is_active == 1).where(GrafanaDashboardModel.grafana_id == grafana_id)).scalars().all()
 
 class CrudApiRequest:
     def __init__(self, db: Session):
@@ -78,7 +117,7 @@ class CrudApiRequest:
         return db_api_request
     
     def getApiRequestByDashboardId(self, dashboard_id: int):
-        return self.db.query(ApiRequestModel).filter(ApiRequestModel.dashboard_id == dashboard_id).all()
+        return self.db.query(ApiRequestModel).filter(ApiRequestModel.dashboard_id == dashboard_id).filter(ApiRequestModel.is_active == 1).all()
     
     def getApiRequestById(self, id: int):
         return self.db.query(ApiRequestModel).filter(ApiRequestModel.id == id).first()

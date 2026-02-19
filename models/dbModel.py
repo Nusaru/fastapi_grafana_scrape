@@ -20,6 +20,7 @@ class GrafanaModel(Base):
     username = Column(String)
     password = Column(String)
     grafana_code = Column(String, index=True)
+    is_active = Column(Integer)
 
     dashboards = relationship("GrafanaDashboardModel",back_populates="grafana", cascade="all, delete-orphan")
 
@@ -31,6 +32,7 @@ class GrafanaDashboardModel(Base):
     title = Column(String)
     grafana_id = Column(Integer, ForeignKey("grafana.id", ondelete="CASCADE"))
     filename = Column(String)
+    is_active = Column(Integer)
 
     grafana= relationship("GrafanaModel",back_populates="dashboards")
     api_request = relationship("ApiRequestModel",back_populates="dashboard", cascade="all, delete-orphan")
@@ -44,5 +46,6 @@ class ApiRequestModel(Base):
     json_payload = Column(String)
     mode = Column(String)
     code = Column(String)
+    is_active = Column(Integer)
 
     dashboard = relationship("GrafanaDashboardModel", back_populates="api_request")
