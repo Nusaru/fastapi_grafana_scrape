@@ -3,3 +3,4 @@ uvicorn
 SQLAlchemy
 pydantic
 selenium
+psycopg2-binary

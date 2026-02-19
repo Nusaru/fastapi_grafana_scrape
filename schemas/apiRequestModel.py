@@ -6,7 +6,7 @@ class ApiRequestBaseModel(BaseModel):
     json_payload: str
     mode: str
     code: str
-    is_active: int
+    is_active: bool
 
 class ApiRequestCreateModel(ApiRequestBaseModel):
     pass

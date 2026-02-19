@@ -5,7 +5,7 @@ class GrafanaBaseModel(BaseModel):
     username: str
     password: str
     grafana_code: str
-    is_active: int
+    is_active: bool
 
 class GrafanaCreateModel(GrafanaBaseModel):
     pass
