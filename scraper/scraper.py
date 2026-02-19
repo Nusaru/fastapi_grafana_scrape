@@ -69,8 +69,7 @@ class SeleniumScraper:
         if self.osName == "Windows":
             self.driver=webdriver.Firefox(options=option)
         else:
-            service= Service("/usr/bin/geckodriver")
-            self.driver = webdriver.Firefox(service=service, options=option)
+            self.driver = webdriver.Firefox(options=option)
         self.driver.command_executor.set_timeout(300)
 
         return self.dashboardScraping()
