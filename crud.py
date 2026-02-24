@@ -14,7 +14,8 @@ class CrudGrafana:
             grafana_url = grafana_model.grafana_url,
             username = grafana_model.username,
             password = grafana_model.password,
-            grafana_code = grafana_model.grafana_code
+            grafana_code = grafana_model.grafana_code,
+            is_active = grafana_model.is_active
         )
         self.db.add(db_grafana)
         self.db.commit()
@@ -52,7 +53,8 @@ class CrudDashboard:
         db_dashboard = GrafanaDashboardModel(
             dashboard_url = dashboard_model.dashboard_url,
             title = dashboard_model.title,
-            grafana_id = dashboard_model.grafana_id
+            grafana_id = dashboard_model.grafana_id,
+            is_active = dashboard_model.is_active
         )
 
         self.db.add(db_dashboard)
@@ -107,7 +109,8 @@ class CrudApiRequest:
             api_url = api_request_model.api_url,
             json_payload = api_request_model.json_payload,
             mode = api_request_model.mode,
-            caption = api_request_model.caption
+            caption = api_request_model.caption,
+            is_active = api_request_model.is_active
         )
 
         self.db.add(db_api_request)
