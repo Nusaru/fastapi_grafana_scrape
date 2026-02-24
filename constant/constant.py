@@ -34,11 +34,11 @@ def buildCaptionForServerStorage(datas: list):
     serverCaption=""
 
     for data in datas:
-        serverCaption += f"server: {data["instance"]}\n"
+        serverCaption += f"server: {data['instance']}\n"
         valueCaption=""
         for value in data["values"]:
             if value["value"] > 80:
-                valueCaption += f"-volume {value["volume"]} = {value["value"]}%\n"
+                valueCaption += f"-volume {value['volume']} = {value['value']}%\n"
         if valueCaption != "":
             caption += serverCaption + valueCaption
         serverCaption=""
@@ -52,12 +52,12 @@ def buildCaptionForTicketing(datas:list):
     data = datas[0]
 
     caption = "Ticketing Information\n" \
-    f"Total = {data["total"]}\n" \
-    f"in Progress = {data["in progress"]}\n" \
-    f"Waiting for Response = {data["waiting for response"]}\n" \
-    f"Waiting for Assigned = {data["waiting for assigned"]}\n" \
-    f"Cancelled = {data["cancelled"]}\n" \
-    f"Closed = {data["closed"]}"
+    f"Total = {data['total']}\n" \
+    f"in Progress = {data['in progress']}\n" \
+    f"Waiting for Response = {data['waiting for response']}\n" \
+    f"Waiting for Assigned = {data['waiting for assigned']}\n" \
+    f"Cancelled = {data['cancelled']}\n" \
+    f"Closed = {data['closed']}"
 
     return caption
 
