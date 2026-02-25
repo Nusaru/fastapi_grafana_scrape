@@ -210,13 +210,14 @@ class SeleniumScraper:
 
             while True:
                 loading_bars = self.driver.find_elements(By.CSS_SELECTOR, "[aria-label='Panel loading bar']")
+                print(f"loading bar count = {len(loading_bars)}")
                 if len(loading_bars) == 0:
                     return
                 
                 if time.time() - start_time > timeout:
                     print(f"Timeout Reached. Retrying {attempt+1}/{maxRetries}")
                     break
-                
+
                 time.sleep(0.5)
         raise TimeoutError(f"Panel loading did not finish after {maxRetries} attempts")
     
