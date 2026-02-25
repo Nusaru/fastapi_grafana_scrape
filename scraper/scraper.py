@@ -62,6 +62,7 @@ class SeleniumScraper:
         option = Options()
         option.add_argument("--headless")
         option.add_argument("--no-sandbox")
+        option.add_argument("--disable-dev-shm-usage")
         option.set_preference("app.update.enabled", False)
         option.set_preference("app.update.auto", False)
         option.set_preference("app.update.staging.enabled", False)
