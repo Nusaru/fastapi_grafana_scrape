@@ -162,6 +162,7 @@ class SeleniumScraper:
         
         strFileName= "./resource/"+ dashboard.filename + ".png"
         
+        print(f"saving screenshot to {strFileName}")
         self.driver.save_full_page_screenshot(strFileName)
 
         return strFileName

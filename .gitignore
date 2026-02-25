@@ -209,5 +209,5 @@ __marimo__/
 #Current Project
 scraper.db
 .vscode/
-resource/
+resource/*.png
 docker-compose.yaml
