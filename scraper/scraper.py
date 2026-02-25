@@ -193,28 +193,32 @@ class SeleniumScraper:
         return True
 
     def waitPanelLoading(self):
-        start_time= time.time()
-        timeout=300
-        self.driver.execute_script("""
-            const mid = document.body.scrollHeight / 2;
-            window.scrollTo(0, mid);
-        """)
+        maxRetries = 5
+        for attempt in range(maxRetries):
+            start_time= time.time()
+            timeout=300
+            self.driver.execute_script("""
+                const mid = document.body.scrollHeight / 2;
+                window.scrollTo(0, mid);
+            """)
 
-        time.sleep(0.5) 
-        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-        time.sleep(0.5) 
+            time.sleep(0.5) 
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+            time.sleep(0.5) 
 
-        self.driver.execute_script("window.scrollTo(0, 0)")
+            self.driver.execute_script("window.scrollTo(0, 0)")
 
-        while True:
-            loading_bars = self.driver.find_elements(By.CSS_SELECTOR, "[aria-label='Panel loading bar']")
-            if len(loading_bars) == 0:
-                return True
-            
-            if time.time() - start_time > timeout:
-                return False
-
-            time.sleep(0.5)
+            while True:
+                loading_bars = self.driver.find_elements(By.CSS_SELECTOR, "[aria-label='Panel loading bar']")
+                if len(loading_bars) == 0:
+                    return
+                
+                if time.time() - start_time > timeout:
+                    print(f"Timeout Reached. Retrying {attempt+1}/{maxRetries}")
+                    break
+                
+                time.sleep(0.5)
+        raise TimeoutError(f"Panel loading did not finish after {maxRetries} attempts")
     
     def pageIsFullyLoaded(self):
         wait = WebDriverWait(self.driver,30)
@@ -222,6 +226,7 @@ class SeleniumScraper:
 
     def driverExit(self):
         self.driver.quit()     
+
 def batchingList(items: List[any], batchSize: int):
     for i in range(0, len(items), batchSize):
         yield items[i: i + batchSize]
