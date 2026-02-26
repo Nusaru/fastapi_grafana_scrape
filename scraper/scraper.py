@@ -132,6 +132,7 @@ class SeleniumScraper:
         title = ""
         try:
             self.driver.get(dashboard.dashboard_url)
+            time.sleep(5)
             loadCompleted = self.pageIsFullyLoaded()
             title = self.driver.title
             if loadCompleted == False or (title == grafanaHomeTitle or title == grafanaTitle):
